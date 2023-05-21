@@ -1,12 +1,11 @@
-#include"ShuduGame.h"
-#include"GameMap.h"
+#include<iostream>
 #include"Instruction.h"
 
+using namespace std;
 
 int main(int argc, char* argv[])
 {
     Instruction inst;
-    ShuduGame shuduGame;
-    inst.handle_inst(shuduGame, argc, argv);
+    inst.handle_inst(argc, argv);
     return 0;
 }

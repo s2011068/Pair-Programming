@@ -1,8 +1,4 @@
 #include<iostream>
-#include<vector>
-#include<string.h>
-#include<fstream>
-#include <stack>
 #include"GameMap.h"
 
 using namespace std;

@@ -1,12 +1,10 @@
 #include<iostream>
-#include<vector>
-#include<string.h>
 #include<fstream>
-#include <stack>
 #include"ShuduGame.h"
 
+using namespace std;
 
-void ShuduGame::init_sudoGame(int count)
+void ShuduGame::init_shuduGame(int count)
 {
     //初始化数独游戏，生成若干个数独终盘
     for(int i = 0; i < count; i++)
@@ -15,20 +13,37 @@ void ShuduGame::init_sudoGame(int count)
     }
 }
 
-void ShuduGame::load_sudoGame(string path)
+void ShuduGame::load_shuduGame(string path)
 {
     //从文件中读取若干个数独游戏
     gameMapsNum = 1;
 }
 
-bool ShuduGame::test_sudoGame()
+void ShuduGame::save_shuduGame()
+{
+    //从文件中读取若干个数独游戏
+    ofstream file("shudu.txt");
+    if(solutionIndex == 1)
+    {
+        file << "游戏" << gameIndex <<endl;
+        file << "-----------------------" << endl;
+    }
+    file << "解法" << solutionIndex <<endl;
+    for(int i = 0; i < MapSize; i++)
+        for(int j = 0; j < MapSize; j++)
+            file << gameMap.gameMap[i][j] << " ";
+        file << endl;
+    file << "-----------------------" << endl;
+}
+
+bool ShuduGame::test_shuduGame()
 {
     //以递归的方式尝试数独棋盘的可能性
     //当发现没有可以填入的数字，就采用回溯的方法，直到棋盘中所有的空格都被填满
     //我们将会找到所有的数独解法
     if(mapSpace.empty())
     {
-        for(int i=0;i<9;i++)
+        /*for(int i=0;i<9;i++)
         {
             for(int j=0;j<9;j++)
             {
@@ -36,7 +51,9 @@ bool ShuduGame::test_sudoGame()
             }
             cout<<endl;
         }
-        cout<<"-----------------"<<endl;
+        cout<<"-----------------"<<endl;*/
+        solutionIndex ++;
+        save_shuduGame();
         return true;
     }
 
@@ -52,7 +69,7 @@ bool ShuduGame::test_sudoGame()
             mapCloumn[number][j] = true;
             mapBlock[number][i/3][j/3] = true;
             gameMap.gameMap[i][j] = number + 1;
-            test_sudoGame();
+            test_shuduGame();
             mapSpace.push(pair<int, int>(i,j));
             mapRow[number][i] = false;
             mapCloumn[number][j] = false;
@@ -62,11 +79,14 @@ bool ShuduGame::test_sudoGame()
     return false;
 }
 
-void ShuduGame::solve_sudoGame(string path)
+void ShuduGame::solve_shuduGame(string path)
 {   
+    load_shuduGame(path);
     for(int count = 0; count < gameMapsNum; count++)
     {
         gameMap = gameMaps[count];
+        solutionIndex = 0;
+        gameIndex = count;
         for(int i = 0; i < MapSize; i++)
         {
             for(int j = 0; j < MapSize; j++)
@@ -96,6 +116,6 @@ void ShuduGame::solve_sudoGame(string path)
                     mapSpace.push(pair<int, int>(i,j));
             }
         }
-        test_sudoGame();
+        test_shuduGame();
     }
 }
