@@ -58,7 +58,7 @@ void Instruction::handle_inst(int argc, char* argv[])
                 return;
             }
             else {
-                cout << "游戏数量超出范围，请提供1-1000之间的值" << endl;
+                cout << "终局数量超出范围，请提供1-1000000之间的值" << endl;
                 return;
             }
         }
@@ -71,7 +71,7 @@ void Instruction::handle_inst(int argc, char* argv[])
             n = stoi(nValue);//解析游戏数量
             if (!isInRange(n, 1, 10000))
             {
-                cout << "错误：游戏数量范围应为1-1000" << endl;
+                cout << "错误：游戏数量范围应为1-10000" << endl;
                 return;
             }
             if (!mValue.empty())//如果提供了-m参数
