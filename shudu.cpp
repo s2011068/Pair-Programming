@@ -1,30 +1,276 @@
 #include<iostream>
+#include<algorithm>
 #include<vector>
+#include<set>
 #include<string.h>
+#include<string>
 #include<fstream>
 #include <stack>
 #include <unistd.h>
+#include<ctime>
+#include<random>
+#include<cstdlib>
+
+#define FIRSTMAX 362880
 
 using namespace std;
 
 const int MapSize = 9;
+static int firstRow[9] = { 1,2,3,4,5,6,7,8,9 };
+string endfilename = "endMaps.txt";
+string gamefilename = "gameMaps.txt";
 
 class GameMap {
 public:
-    int gameMap[MapSize][MapSize];
+    vector<vector<int> > gameMap;
+    int shift[8] = { 3, 6, 1, 4, 7, 2, 5, 8 };
 public:
-    void generate_gameMap();
-    void save_gameMap();
+    GameMap();//默认构造函数
+    GameMap(const GameMap& existMap);//拷贝构造函数
+    void generate_endMap(int firstRow[]);// 生成数独终局
+    void add_endGrids(int n);
+    void generate_gameMap(int minHoles, int maxHoles,int mode, bool uFlag);
+    void digHoles(GameMap& endMap, int holes, bool uFlag);
+    bool isNumberInRow(const GameMap& shudu, int row, int number);// 检查数字是否在行中重复
+    bool isNumberInColumn(const GameMap& shudu, int col, int number);// 检查数字是否在列中重复
+    bool isNumberInBox(const GameMap& shudu, int startRow, int startCol, int number);// 检查数字是否在九宫格中重复
+    bool isNumberValid(const GameMap& shudu, int row, int col, int number);// 检查数字在当前位置是否合法
+    bool isShuduSolved(const GameMap& shudu);// 检查数独是否已经解决完毕
+    bool solveShudu(GameMap& shudu, int& solutionCount);
 };
 
-void GameMap::generate_gameMap() 
-{
+// 自定义比较函数
+struct SudoCompare {
+    bool operator()(const GameMap& obj1, const GameMap& obj2) const {
+        return obj1.gameMap < obj2.gameMap;
+    }
+};
 
+set<GameMap, SudoCompare> endGrids, gameGrids;
+
+// 生成指定范围内的随机数
+int getRandomNumber(int min, int max) {
+    static random_device rd;
+    static mt19937 gen(rd());
+    uniform_int_distribution<int> dist(min, max);
+    return dist(gen);
 }
 
-void GameMap::save_gameMap() 
-{
+GameMap::GameMap() {
+    gameMap.resize(MapSize, vector<int>(MapSize));
+    for (int row = 0; row < MapSize; row++) {
+        for (int col = 0; col < MapSize; col++) {
+            gameMap[row][col] = 0;
+        }
+    }
+}
 
+GameMap::GameMap(const GameMap& existedGrid) {
+    gameMap.resize(MapSize, vector<int>(MapSize));
+    for (int row = 0; row < MapSize; row++) {
+        for (int col = 0; col < MapSize; col++) {
+            this->gameMap[row][col] = existedGrid.gameMap[row][col];
+        }
+    }
+}
+
+void GameMap::generate_endMap(int firstRow[]) {
+    // 将第一行的排列应用到数独终局中
+    for (int i = 0; i < MapSize; i++) {
+        gameMap[0][i] = firstRow[i];
+    }
+    // 根据第一行的排列生成数独终局
+    for (int row = 1; row < MapSize; row++) {
+        for (int col = 0; col < MapSize; col++) {
+            gameMap[row][col] = gameMap[0][(col + shift[row - 1]) % 9];
+        }
+    }
+    return;
+}
+
+void GameMap::add_endGrids(int n) {
+    while (endGrids.size() < n && endGrids.size() < FIRSTMAX) {
+        this->generate_endMap(firstRow);
+        endGrids.insert(*this);
+        //cout << "终局插入了" << endGrids.size()<<endl;
+        next_permutation(firstRow, firstRow + 9);
+    }
+    while (endGrids.size() < n) {
+        for (const auto& existingGrid : endGrids) {
+            GameMap newMap(existingGrid);
+            swap(newMap.gameMap[1], newMap.gameMap[2]);
+            endGrids.insert(newMap);
+            if (endGrids.size() == n) break;
+            GameMap new2Map(existingGrid);
+            swap(new2Map.gameMap[4], new2Map.gameMap[5]);
+            endGrids.insert(new2Map);
+            if (endGrids.size() == n) break;
+            GameMap new3Map(existingGrid);
+            swap(new3Map.gameMap[7], new3Map.gameMap[8]);
+            endGrids.insert(new3Map);
+            if (endGrids.size() == n) break;
+        }
+    }
+}
+
+void GameMap::generate_gameMap(int minHoles , int maxHoles,int mode, bool uFlag = false) {
+    for (GameMap grid : endGrids) {
+        if (mode == 0 && minHoles==0 &&maxHoles == 0) {
+            minHoles = 25;
+            maxHoles = 35;
+        }
+        if (mode == 1) {
+            minHoles = 20;
+            maxHoles = 30;
+        }
+        if (mode == 2) {
+            minHoles = 31;
+            maxHoles = 44;
+        }
+        if (mode == 3) {
+            minHoles = 45;
+            maxHoles = 55;
+        }
+        cout << "Game Mode:" << mode << endl;
+        cout << "Scope of holes:" << minHoles << "~" << maxHoles << endl;
+        cout << "Is there a unique solution:" << uFlag <<endl;
+        int holes = getRandomNumber(minHoles, maxHoles);
+        digHoles(grid, holes,uFlag);  
+        gameGrids.insert(grid);
+    }
+}
+
+void GameMap::digHoles(GameMap& grid, int holes,bool uFlag=false) {
+    cout << "Holes:" << holes << endl;
+    int count = 0;
+    while (count < holes) {
+        int row = getRandomNumber(0, MapSize - 1);
+        int col = getRandomNumber(0, MapSize - 1);
+        if (uFlag == false) {//不保证唯一解
+            if (grid.gameMap[row][col] != 0) {
+                grid.gameMap[row][col] = 0;
+            }
+        }
+        else {//不保证唯一解
+            if (grid.gameMap[row][col] != 0) {
+                //cout << "进入挖空了" << endl;
+                int temp = grid.gameMap[row][col];
+                grid.gameMap[row][col] = 0;
+
+                GameMap tempShudu = grid;
+
+                // 检查挖空后是否有唯一解
+                int solutionCount = 0;
+                solveShudu(tempShudu, solutionCount);
+                if (solutionCount != 1) {
+                    grid.gameMap[row][col] = temp; // 还原挖空前的数字
+                }
+            }
+        }
+        count++;    
+    }
+}
+
+
+bool GameMap::isNumberInRow(const GameMap& shudu, int row, int number) {
+    for (int col = 0; col < MapSize; col++) {
+        if (shudu.gameMap[row][col] == number) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GameMap::isNumberInColumn(const GameMap& shudu, int col, int number) {
+    for (int row = 0; row < MapSize; row++) {
+        if (shudu.gameMap[row][col] == number) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GameMap::isNumberInBox(const GameMap& shudu, int startRow, int startCol, int number) {
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            if (shudu.gameMap[row + startRow][col + startCol] == number) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool GameMap::isNumberValid(const GameMap& shudu, int row, int col, int number) {
+    return !isNumberInRow(shudu, row, number) &&
+        !isNumberInColumn(shudu, col, number) &&
+        !isNumberInBox(shudu, row - row % 3, col - col % 3, number);
+}
+
+bool GameMap::isShuduSolved(const GameMap& shudu) {
+    for (int row = 0; row < MapSize; row++) {
+        for (int col = 0; col < MapSize; col++) {
+            if (shudu.gameMap[row][col] == 0) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool GameMap::solveShudu(GameMap& shudu, int& solutionCount) {
+    //cout << "进入求解" << endl;
+    for (int row = 0; row < MapSize; row++) {
+        for (int col = 0; col < MapSize; col++) {
+            if (shudu.gameMap[row][col] == 0) {
+                for (int number = 1; number <= MapSize; number++) {
+                    if (isNumberValid(shudu, row, col, number)) {
+                        shudu.gameMap[row][col] = number;
+                        if (solveShudu(shudu, solutionCount)) {
+                            if (solutionCount > 1) {
+                                return true; // 有多个解，停止求解
+                            }
+                        }
+                        shudu.gameMap[row][col] = 0; // 回溯
+                    }
+                }
+                return false;
+            }
+        }
+    }
+
+    if (isShuduSolved(shudu)) {
+        solutionCount++;
+        return true;
+    }
+    return false;
+}
+
+static void saveToFile(const set<GameMap, SudoCompare>& uniqueObjects, const string& filename) {
+    ofstream file(filename, ios::app);
+    int mycount = 1;
+    if (file.is_open()) {
+        for (const auto& obj : uniqueObjects) {
+            file << "Map" << mycount << "---------------------------" << endl;;
+            for (const auto& row : obj.gameMap) {
+                for (int val : row) {
+                    string cval;
+                    cval = to_string(val);
+                    if (cval == "0") {
+                        cval = "$";
+                    }
+                    file << cval << " ";
+                }
+                file << endl;
+            }
+            mycount++;
+        }
+        file.close();
+        cout << "Map data saved to file: " << filename << endl;
+    }
+    else {
+        cerr << "Failed to open file: " << filename << endl;
+    }
 }
 
 class ShuduGame {
@@ -49,11 +295,11 @@ public:
 
 void ShuduGame::init_shuduGame(int count)
 {
-    //初始化数独游戏，生成若干个数独终盘
-    for(int i = 0; i < count; i++)
-    {
-        gameMaps[i].generate_gameMap();
-    }
+    // //初始化数独游戏,生成若干个数独终盘
+    // for(int i = 0; i < count; i++)
+    // {
+    //     gameMaps[i].generate_gameMap();
+    // }
 }
 
 void ShuduGame::load_shuduGame(string path)
@@ -106,7 +352,7 @@ void ShuduGame::save_shuduGame()
 bool ShuduGame::test_shuduGame()
 {
     //以递归的方式尝试数独棋盘的可能性
-    //当发现没有可以填入的数字，就采用回溯的方法，直到棋盘中所有的空格都被填满
+    //当发现没有可以填入的数字,就采用回溯的方法,直到棋盘中所有的空格都被填满
     //我们将会找到所有的数独解法
     if(mapSpace.empty())
     {
@@ -170,7 +416,7 @@ void ShuduGame::solve_shuduGame(string path ,int sNum)
                     mapBlock[i][j][k] = false;
         
         mapSpace = stack<pair<int, int>>();
-        //对当前数独棋盘信息进行统计，找出每个数字所在的行和列以及空格的位置
+        //对当前数独棋盘信息进行统计,找出每个数字所在的行和列以及空格的位置
         for(int i = 0; i < MapSize; i++)
         {
             for(int j = 0; j < MapSize; j++)
@@ -191,19 +437,29 @@ void ShuduGame::solve_shuduGame(string path ,int sNum)
 }
 
 class Instruction {
+private:
+    int c = 0;//终局个数
+    int n = 0;//游戏数量
+    int m = 0;//游戏难度
+    int rMin = 0;//挖空数量最小值
+    int rMax = 0;//挖空数量最大值
+    bool uFlag = false;  // 解唯一标志
 public:
-    void handle_inst(ShuduGame shuduGame, int argc, char* argv[]);
+    void handle_inst(int argc, char* argv[]);
+    bool isInRange(int value, int minRange, int maxRange);
 };
 
-void Instruction::handle_inst(ShuduGame shuduGame, int argc, char* argv[]) 
-{
-    if(strcmp(argv[1], "-c") == 0)
-        if(argc == 3)
-            shuduGame.init_shuduGame(argv[2][0] - '0');
-        else
-            cout<<"error: please input the map's num!"<<endl;
-    else if(strcmp(argv[1], "-s") == 0)
-    {
+bool Instruction::isInRange(int value, int minRange, int maxRange) {
+    return (value >= minRange && value <= maxRange);
+}
+
+
+void Instruction::handle_inst(int argc, char* argv[]) 
+{   
+    ShuduGame shuduGame;
+    GameMap grid;
+    if(strcmp(argv[1], "-s") == 0)
+    {   
         if(argc == 3)
             shuduGame.solve_shuduGame(argv[2], 0);
         else if(argc == 5 && strcmp(argv[3], "-n") == 0)
@@ -211,15 +467,91 @@ void Instruction::handle_inst(ShuduGame shuduGame, int argc, char* argv[])
         else
             cout<<"error: please input the file path!"<<endl;
     }
-    else
-        cout<<"error: inst '"<<argv[1]<<"' doesn't exist!"<<endl;
-
+    else if (strcmp(argv[1], "-c") == 0) {
+        //cout << "cvalue" << cValue << endl;
+        if (argc ==3) {
+            c = stoi(argv[2]);
+            if (isInRange(c, 1, 1000000)) {
+                grid.add_endGrids(c);//生成数独终局
+                saveToFile(endGrids, endfilename);
+                return;
+            }
+            else {
+                cout << "The quantity exceeds the range. Please provide a value between 1-1000000" << endl;
+                return;
+            }
+        }
+        else {
+            cout << "Error:The parameter is missing,please enter :shudu.exe - c <count>" <<endl;
+            return;
+        }
+    }
+    else {
+        for (int i = 1; i < argc; i++) {
+            string arg = argv[i];
+            if (arg == "-n") {
+                i++;
+                if (i >= argc) {
+                    cout << "Error:The parameter is missing,please enter :shudu.exe - n <count>" << endl;
+                    return;
+                }
+                n = stoi(argv[i]);
+                if (!isInRange(n, 1, 10000))
+                {
+                    cout << "Error: Game quantity range should be between 1 and 10000" << endl;
+                    return;
+                }               
+            }
+            else if (arg == "-m") {
+                i++;
+                if (i >= argc) {
+                    cout << "Error:The parameter is missing,please enter :shudu.exe - n <count> -m <mode>" << endl;
+                    return;
+                }
+                m = stoi(argv[i]);
+                if (!isInRange(m, 1, 3)) {
+                    cout << "Error: please choose 1, 2, or 3" << endl;
+                    return;
+                }
+            }
+            else if (arg == "-r") {
+                i++;
+                if (i >= argc) {
+                    cout << "Error:please input shudu.exe - n<count>- r<minHoles~maxHoles>" << endl;
+                    return;
+                }
+                string range = argv[i];
+                size_t rangePos = range.find("~");
+                if (rangePos == string::npos) {
+                    cout << "Error:please input shudu.exe - n<count>- r<minHoles~maxHoles>" << endl;
+                    return;
+                }
+                string rMinValue = range.substr(0, rangePos);
+                string rMaxValue = range.substr(rangePos + 1);
+                rMin = stoi(rMinValue);
+                rMax = stoi(rMaxValue);
+                if (!isInRange(rMin, 20, 55) || !isInRange(rMax, 20, 55) || rMin > rMax) {
+                    cout << "Error:please provide a valid range between 20 and 55" << endl;
+                    return;
+                }
+            }else if (arg == "-u") {
+                uFlag = true;
+            }
+            else {
+                cout<<"error: inst '"<<argv[1]<<"' doesn't exist!"<<endl;
+                return;
+            }         
+        }
+        grid.add_endGrids(n);//生成数独终局
+        grid.generate_gameMap(rMin, rMax, m, uFlag);
+        saveToFile(gameGrids, gamefilename);
+        return;
+    }        
 }
 
 int main(int argc, char* argv[])
 {
-    Instruction inst;
-    ShuduGame shuduGame;
-    inst.handle_inst(shuduGame, argc, argv);
+    Instruction inst;   
+    inst.handle_inst(argc, argv);
     return 0;
 }
