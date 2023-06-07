@@ -247,7 +247,7 @@ bool GameMap::solveShudu(GameMap& shudu, int& solutionCount) {
 }
 
 static void saveToFile(const set<GameMap, SudoCompare>& uniqueObjects, const string& filename) {
-    ofstream file(filename);
+    ofstream file(filename, ios::app);
     int mycount = 1;
     if (file.is_open()) {
         for (const auto& obj : uniqueObjects) {
@@ -305,20 +305,31 @@ void ShuduGame::init_shuduGame(int count)
 void ShuduGame::load_shuduGame(string path)
 {
     //从文件中读取若干个数独游戏
+    //cout<<"开始读取！"<<path<<endl;
     ifstream file(path);
     string line;
     int index = 0;
+    GameMap gameMap;
     while(getline(file, line))
     {
-        GameMap gameMap;
         if(index % 10)
             for(int i = 0; i < MapSize; i++)
                 if(line[i * 2] == '$')
                     gameMap.gameMap[index % 10 - 1][i] = 0; 
                 else
                     gameMap.gameMap[index % 10 - 1][i] = (line[i * 2] - '0');
-        if((index + 1) % 10 == 0)
+        if((index + 1) % 10 == 0){
+            /*for(int i=0;i<9;i++)
+            {
+                for(int j=0;j<9;j++)
+                {
+                    cout<<gameMap.gameMap[i][j]<<" ";
+                }
+                cout<<endl;
+            }
+            cout<<"-----------------"<<endl;*/
             this->gameMaps.push_back(gameMap);
+        }
         index ++;
     } 
     gameMapsNum = index / 10;
@@ -328,6 +339,10 @@ void ShuduGame::load_shuduGame(string path)
 void ShuduGame::save_shuduGame()
 {
     //从文件中读取若干个数独游戏
+    if(gameIndex == 1) {
+        ofstream file("shudu.txt", ios::trunc);
+        file.close();
+    }
     ofstream file("shudu.txt", ios::app);
     if(solutionIndex == 1)
     {
