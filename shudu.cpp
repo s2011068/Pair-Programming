@@ -14,7 +14,25 @@
 
 #define FIRSTMAX 362880
 
-using namespace std;
+// using namespace std;
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::string;
+using std::set;
+using std::vector;
+using std::ofstream;
+using std::ifstream;
+using std::stoi;
+using std::stack;
+using std::ios;
+using std::pair;
+using std::to_string;
+using std::random_device;
+using std::uniform_int_distribution;
+using std::mt19937;
+using std::next_permutation;
+
 
 const int MapSize = 9;
 static int firstRow[9] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -26,17 +44,17 @@ class GameMap {
     vector<vector<int> > gameMap;
     int shift[8] = { 3, 6, 1, 4, 7, 2, 5, 8 };
  public:
-    GameMap(); // 默认构造函数
-    GameMap(const GameMap& existMap); // 拷贝构造函数
-    void generate_endMap(int firstRow[]); // 生成数独终局
+    GameMap();  // 默认构造函数
+    GameMap(const GameMap& existMap);  // 拷贝构造函数
+    void generate_endMap(int firstRow[]);  // 生成数独终局
     void add_endGrids(int n);
     void generate_gameMap(int minHoles, int maxHoles, int mode, bool uFlag);
     void digHoles(GameMap& endMap, int holes, bool uFlag);
-    bool isNumberInRow(const GameMap& shudu, int row, int number); // 检查数字是否在行中重复
-    bool isNumberInColumn(const GameMap& shudu, int col, int number); // 检查数字是否在列中重复
-    bool isNumberInBox(const GameMap& shudu, int startRow, int startCol, int number); // 检查数字是否在九宫格中重复
-    bool isNumberValid(const GameMap& shudu, int row, int col, int number); // 检查数字在当前位置是否合法
-    bool isShuduSolved(const GameMap& shudu); // 检查数独是否已经解决完毕
+    bool isNumberInRow(const GameMap& shudu, int row, int number);  // 检查数字是否在行中重复
+    bool isNumberInColumn(const GameMap& shudu, int col, int number);  // 检查数字是否在列中重复
+    bool isNumberInBox(const GameMap& shudu, int startRow, int startCol, int number);  // 检查数字是否在九宫格中重复
+    bool isNumberValid(const GameMap& shudu, int row, int col, int number);  // 检查数字在当前位置是否合法
+    bool isShuduSolved(const GameMap& shudu);  // 检查数独是否已经解决完毕
     bool solveShudu(GameMap& shudu, int& solutionCount);
 };
 
@@ -147,11 +165,11 @@ void GameMap::digHoles(GameMap& grid, int holes, bool uFlag = false) {
     while (count < holes) {
         int row = getRandomNumber(0, MapSize - 1);
         int col = getRandomNumber(0, MapSize - 1);
-        if (uFlag == false) { // 不保证唯一解
+        if (uFlag == false) {  // 不保证唯一解
             if (grid.gameMap[row][col] != 0) {
                 grid.gameMap[row][col] = 0;
             }
-        } else { // 不保证唯一解
+        } else {  // 不保证唯一解
             if (grid.gameMap[row][col] != 0) {
                 // cout << "进入挖空了" << endl;
                 int temp = grid.gameMap[row][col];
@@ -163,7 +181,7 @@ void GameMap::digHoles(GameMap& grid, int holes, bool uFlag = false) {
                 int solutionCount = 0;
                 solveShudu(tempShudu, solutionCount);
                 if (solutionCount != 1) {
-                    grid.gameMap[row][col] = temp; // 还原挖空前的数字
+                    grid.gameMap[row][col] = temp;  // 还原挖空前的数字
                 }
             }
         }
@@ -228,10 +246,10 @@ bool GameMap::solveShudu(GameMap& shudu, int& solutionCount) {
                         shudu.gameMap[row][col] = number;
                         if (solveShudu(shudu, solutionCount)) {
                             if (solutionCount > 1) {
-                                return true; // 有多个解，停止求解
+                                return true;  // 有多个解，停止求解
                             }
                         }
-                        shudu.gameMap[row][col] = 0; // 回溯
+                        shudu.gameMap[row][col] = 0;  // 回溯
                     }
                 }
                 return false;
@@ -276,21 +294,36 @@ class ShuduGame {
  private:
     vector<GameMap> gameMaps;
     GameMap gameMap;
-    bool mapRow[MapSize][MapSize]; // 记录每个数字出现在哪一行
-    bool mapCloumn[MapSize][MapSize]; // 记录每个数字出现在哪一列
-    bool mapBlock[MapSize][MapSize/3][MapSize/3]; // 记录每个数字出现在哪一块（3*3）
-    stack<pair<int, int>> mapSpace; // 记录每个空格的位置
+    bool mapRow[MapSize][MapSize];  // 记录每个数字出现在哪一行
+    bool mapCloumn[MapSize][MapSize];  // 记录每个数字出现在哪一列
+    bool mapBlock[MapSize][MapSize/3][MapSize/3];  // 记录每个数字出现在哪一块（3*3）
+    stack<pair<int, int>> mapSpace;  // 记录每个空格的位置
     int gameMapsNum = 0;
     int solutionIndex = 0;
     int gameIndex = 0;
     int solutionNum = 0;
  public:
+    ShuduGame ShuduGame();
     void init_shuduGame(int count);
     void solve_shuduGame(string path, int solutionNum);
     bool test_shuduGame();
     void load_shuduGame(string path);
     void save_shuduGame();
 };
+
+ShuduGame::ShuduGame() {
+    for (int i = 0; i < MapSize; i++) {
+            for (int j = 0; j < MapSize; j++) {
+                mapRow[i][j] = false;
+                mapCloumn[i][j] = false;
+            }
+    }
+
+    for (int i = 0; i < MapSize; i++)
+        for (int j = 0; j < MapSize/3; j++)
+            for (int k = 0; k < MapSize/3; k++)
+                mapBlock[i][j][k] = false;
+}
 
 void ShuduGame::init_shuduGame(int count) {
     // // 初始化数独游戏,生成若干个数独终盘
@@ -427,11 +460,11 @@ void ShuduGame::solve_shuduGame(string path, int sNum) {
 
 class Instruction {
  private:
-    int c = 0;// 终局个数
-    int n = 0;// 游戏数量
-    int m = 0;// 游戏难度
-    int rMin = 0;// 挖空数量最小值
-    int rMax = 0;// 挖空数量最大值
+    int c = 0;  // 终局个数
+    int n = 0;  // 游戏数量
+    int m = 0;  // 游戏难度
+    int rMin = 0;  // 挖空数量最小值
+    int rMax = 0;  // 挖空数量最大值
     bool uFlag = false;  // 解唯一标志
  public:
     void handle_inst(int argc, char* argv[]);
@@ -458,7 +491,7 @@ void Instruction::handle_inst(int argc, char* argv[]) {
         if (argc ==3) {
             c = stoi(argv[2]);
             if (isInRange(c, 1, 1000000)) {
-                grid.add_endGrids(c);// 生成数独终局
+                grid.add_endGrids(c);  // 生成数独终局
                 saveToFile(endGrids, "endMaps.txt");
                 return;
             } else {
@@ -521,7 +554,7 @@ void Instruction::handle_inst(int argc, char* argv[]) {
                 return;
             }
         }
-        grid.add_endGrids(n); // 生成数独终局
+        grid.add_endGrids(n);  // 生成数独终局
         grid.generate_gameMap(rMin, rMax, m, uFlag);
         saveToFile(gameGrids, "gameMaps.txt");
         return;
