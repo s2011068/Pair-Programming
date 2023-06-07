@@ -14,25 +14,7 @@
 
 #define FIRSTMAX 362880
 
-// using namespace std;
-using std::cout;
-using std::cerr;
-using std::endl;
-using std::string;
-using std::set;
-using std::vector;
-using std::ofstream;
-using std::ifstream;
-using std::stoi;
-using std::stack;
-using std::ios;
-using std::pair;
-using std::to_string;
-using std::random_device;
-using std::uniform_int_distribution;
-using std::mt19937;
-using std::next_permutation;
-
+using namespace std;
 
 const int MapSize = 9;
 static int firstRow[9] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -303,7 +285,7 @@ class ShuduGame {
     int gameIndex = 0;
     int solutionNum = 0;
  public:
-    ShuduGame ShuduGame();
+    ShuduGame();
     void init_shuduGame(int count);
     void solve_shuduGame(string path, int solutionNum);
     bool test_shuduGame();
