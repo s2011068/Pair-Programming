@@ -247,7 +247,7 @@ bool GameMap::solveShudu(GameMap& shudu, int& solutionCount) {
 }
 
 static void saveToFile(const set<GameMap, SudoCompare>& uniqueObjects, const string& filename) {
-    ofstream file(filename, ios::app);
+    ofstream file(filename);
     int mycount = 1;
     if (file.is_open()) {
         for (const auto& obj : uniqueObjects) {
