@@ -21,13 +21,13 @@ OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10m3.cov -- %EXECU
 
 OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10r25~35.cov -- %EXECUTABLE% -n 10 -r 25~35
 
-OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10u.cov -- %EXECUTABLE% -n 100 -u
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n100u.cov -- %EXECUTABLE% -n 100 -u
 
 OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sgametxt.cov -- %EXECUTABLE% -s game.txt
 
 OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sDgametxt.cov -- %EXECUTABLE% -s D:\Datas\game.txt
 
-OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sgametxt.cov -- %EXECUTABLE% -s game.txt -n 1
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sgamen1txt.cov -- %EXECUTABLE% -s game.txt -n 1
 
 
 
