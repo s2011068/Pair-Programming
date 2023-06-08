@@ -6,4 +6,4 @@ test_binary：存放每个测试用例的二进制代码覆盖率
 
 integration_run.py：将二进制代码的代码覆盖率合并得到集成测试的结果并输出到html文件中。
 
-coverage.html：集成测试的结果，可在index.html中查看具体的代码覆盖率。
+coverage.html：集成测试的结果，可在index.html中查看具体的代码覆盖率。最终结果为98%
