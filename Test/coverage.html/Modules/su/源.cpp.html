@@ -1,0 +1,580 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>源.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+    <body onload="prettyPrint()">
+        <h4></h4>
+        <pre class="prettyprint lang-cpp linenums">
+// Copyright [2023] &lt;Copyright albert&gt;
+#include&lt;string.h&gt;
+#include&lt;iostream&gt;
+#include&lt;algorithm&gt;
+#include&lt;vector&gt;
+#include&lt;set&gt;
+#include&lt;string&gt;
+#include&lt;fstream&gt;
+#include &lt;stack&gt;
+#include&lt;ctime&gt;
+#include&lt;random&gt;
+#include&lt;cstdlib&gt;
+
+#define FIRSTMAX 362880
+
+using namespace std;
+
+const int MapSize = 9;
+static int firstRow[9] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+// string endfilename = "endMaps.txt";
+// string gamefilename = "gameMaps.txt";
+
+class GameMap {
+public:
+    vector&lt;vector&lt;int&gt; &gt; gameMap;
+<span style = "background-color:#dfd">    int shift[8] = { 3, 6, 1, 4, 7, 2, 5, 8 };</span>
+public:
+    GameMap();  // Ä¬ÈÏ¹¹Ôìº¯Êý
+    GameMap(const GameMap&amp; existMap);  // ¿½±´¹¹Ôìº¯Êý
+    void generate_endMap(int firstRow[]);  // Éú³ÉÊý¶ÀÖÕ¾Ö
+    void add_endGrids(int n);
+    void generate_gameMap(int minHoles, int maxHoles, int mode, bool uFlag);
+    void digHoles(GameMap&amp; endMap, int holes, bool uFlag);
+    bool isNumberInRow(const GameMap&amp; shudu, int row, int number);  // ¼ì²éÊý×ÖÊÇ·ñÔÚÐÐÖÐÖØ¸´
+    bool isNumberInColumn(const GameMap&amp; shudu, int col, int number);  // ¼ì²éÊý×ÖÊÇ·ñÔÚÁÐÖÐÖØ¸´
+    bool isNumberInBox(const GameMap&amp; shudu, int startRow, int startCol, int number);  // ¼ì²éÊý×ÖÊÇ·ñÔÚ¾Å¹¬¸ñÖÐÖØ¸´
+    bool isNumberValid(const GameMap&amp; shudu, int row, int col, int number);  // ¼ì²éÊý×ÖÔÚµ±Ç°Î»ÖÃÊÇ·ñºÏ·¨
+    bool isShuduSolved(const GameMap&amp; shudu);  // ¼ì²éÊý¶ÀÊÇ·ñÒÑ¾­½â¾öÍê±Ï
+    bool solveShudu(GameMap&amp; shudu, int&amp; solutionCount);
+};
+
+// ×Ô¶¨Òå±È½Ïº¯Êý
+struct SudoCompare {
+<span style = "background-color:#dfd">    bool operator()(const GameMap&amp; obj1, const GameMap&amp; obj2) const {
+        return obj1.gameMap &lt; obj2.gameMap;
+    }</span>
+};
+
+<span style = "background-color:#dfd">set&lt;GameMap, SudoCompare&gt; endGrids, gameGrids;</span>
+
+// Éú³ÉÖ¸¶¨·¶Î§ÄÚµÄËæ»úÊý
+<span style = "background-color:#dfd">int getRandomNumber(int min, int max) {
+    static random_device rd;
+    static mt19937 gen(rd());
+    uniform_int_distribution&lt;int&gt; dist(min, max);
+    return dist(gen);
+}</span>
+
+<span style = "background-color:#dfd">GameMap::GameMap() {
+    gameMap.resize(MapSize, vector&lt;int&gt;(MapSize));
+    for (int row = 0; row &lt; MapSize; row++) {
+        for (int col = 0; col &lt; MapSize; col++) {
+            gameMap[row][col] = 0;
+        }
+    }
+}</span>
+
+<span style = "background-color:#dfd">GameMap::GameMap(const GameMap&amp; existedGrid) {
+    gameMap.resize(MapSize, vector&lt;int&gt;(MapSize));
+    for (int row = 0; row &lt; MapSize; row++) {
+        for (int col = 0; col &lt; MapSize; col++) {
+            this-&gt;gameMap[row][col] = existedGrid.gameMap[row][col];
+        }
+    }
+}</span>
+
+<span style = "background-color:#dfd">void GameMap::generate_endMap(int firstRow[]) {</span>
+    // ½«µÚÒ»ÐÐµÄÅÅÁÐÓ¦ÓÃµ½Êý¶ÀÖÕ¾ÖÖÐ
+<span style = "background-color:#dfd">    for (int i = 0; i &lt; MapSize; i++) {
+        gameMap[0][i] = firstRow[i];
+    }</span>
+    // ¸ù¾ÝµÚÒ»ÐÐµÄÅÅÁÐÉú³ÉÊý¶ÀÖÕ¾Ö
+<span style = "background-color:#dfd">    for (int row = 1; row &lt; MapSize; row++) {
+        for (int col = 0; col &lt; MapSize; col++) {
+            gameMap[row][col] = gameMap[0][(col + shift[row - 1]) % 9];
+        }
+    }</span>
+    return;
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">void GameMap::add_endGrids(int n) {
+    while (endGrids.size() &lt; n &amp;&amp; endGrids.size() &lt; FIRSTMAX) {
+        this-&gt;generate_endMap(firstRow);
+        endGrids.insert(*this);</span>
+        // cout &lt;&lt; "ÖÕ¾Ö²åÈëÁË" &lt;&lt; endGrids.size()&lt;&lt;endl;
+<span style = "background-color:#dfd">        next_permutation(firstRow, firstRow + 9);
+    }
+    while (endGrids.size() &lt; n) {
+        for (const auto&amp; existingGrid : endGrids) {
+            GameMap newMap(existingGrid);
+            swap(newMap.gameMap[1], newMap.gameMap[2]);
+            endGrids.insert(newMap);
+            if (endGrids.size() == n) break;
+            GameMap new2Map(existingGrid);
+            swap(new2Map.gameMap[4], new2Map.gameMap[5]);
+            endGrids.insert(new2Map);
+            if (endGrids.size() == n) break;
+            GameMap new3Map(existingGrid);
+            swap(new3Map.gameMap[7], new3Map.gameMap[8]);
+            endGrids.insert(new3Map);
+            if (endGrids.size() == n) break;
+        }
+    }
+}</span>
+
+<span style = "background-color:#dfd">void GameMap::generate_gameMap(int minHoles, int maxHoles, int mode, bool uFlag = false) {
+    for (GameMap grid : endGrids) {
+        if (mode == 0 &amp;&amp; minHoles == 0 &amp;&amp; maxHoles == 0) {
+            minHoles = 25;
+            maxHoles = 35;</span>
+        }
+<span style = "background-color:#dfd">        if (mode == 1) {
+            minHoles = 20;
+            maxHoles = 30;</span>
+        }
+<span style = "background-color:#dfd">        if (mode == 2) {
+            minHoles = 31;
+            maxHoles = 44;</span>
+        }
+<span style = "background-color:#dfd">        if (mode == 3) {
+            minHoles = 45;
+            maxHoles = 55;</span>
+        }
+<span style = "background-color:#dfd">        cout &lt;&lt; "Game Mode:" &lt;&lt; mode &lt;&lt; endl;
+        cout &lt;&lt; "Scope of holes:" &lt;&lt; minHoles &lt;&lt; "~" &lt;&lt; maxHoles &lt;&lt; endl;
+        cout &lt;&lt; "Is there a unique solution:" &lt;&lt; uFlag &lt;&lt; endl;
+        int holes = getRandomNumber(minHoles, maxHoles);
+        digHoles(grid, holes, uFlag);
+        gameGrids.insert(grid);
+    }
+}</span>
+
+<span style = "background-color:#dfd">void GameMap::digHoles(GameMap&amp; grid, int holes, bool uFlag = false) {
+    cout &lt;&lt; "Holes:" &lt;&lt; holes &lt;&lt; endl;
+    int count = 0;
+    while (count &lt; holes) {
+        int row = getRandomNumber(0, MapSize - 1);
+        int col = getRandomNumber(0, MapSize - 1);
+        if (uFlag == false) {  // ²»±£Ö¤Î¨Ò»½â
+            if (grid.gameMap[row][col] != 0) {
+                grid.gameMap[row][col] = 0;</span>
+            }
+<span style = "background-color:#dfd">        }</span>
+        else {  // ²»±£Ö¤Î¨Ò»½â
+<span style = "background-color:#dfd">            if (grid.gameMap[row][col] != 0) {</span>
+                // cout &lt;&lt; "½øÈëÍÚ¿ÕÁË" &lt;&lt; endl;
+<span style = "background-color:#dfd">                int temp = grid.gameMap[row][col];
+                grid.gameMap[row][col] = 0;</span>
+
+<span style = "background-color:#dfd">                GameMap tempShudu = grid;</span>
+
+                // ¼ì²éÍÚ¿ÕºóÊÇ·ñÓÐÎ¨Ò»½â
+<span style = "background-color:#dfd">                int solutionCount = 0;
+                solveShudu(tempShudu, solutionCount);
+                if (solutionCount != 1) {
+                    grid.gameMap[row][col] = temp;  // »¹Ô­ÍÚ¿ÕÇ°µÄÊý×Ö</span>
+                }
+<span style = "background-color:#dfd">            }</span>
+        }
+<span style = "background-color:#dfd">        count++;
+    }
+}</span>
+
+
+<span style = "background-color:#dfd">bool GameMap::isNumberInRow(const GameMap&amp; shudu, int row, int number) {
+    for (int col = 0; col &lt; MapSize; col++) {
+        if (shudu.gameMap[row][col] == number) {
+            return true;</span>
+        }
+<span style = "background-color:#dfd">    }
+    return false;
+}</span>
+
+<span style = "background-color:#dfd">bool GameMap::isNumberInColumn(const GameMap&amp; shudu, int col, int number) {
+    for (int row = 0; row &lt; MapSize; row++) {
+        if (shudu.gameMap[row][col] == number) {
+            return true;</span>
+        }
+<span style = "background-color:#dfd">    }
+    return false;
+}</span>
+
+<span style = "background-color:#dfd">bool GameMap::isNumberInBox(const GameMap&amp; shudu, int startRow, int startCol, int number) {
+    for (int row = 0; row &lt; 3; row++) {
+        for (int col = 0; col &lt; 3; col++) {
+            if (shudu.gameMap[row + startRow][col + startCol] == number) {
+                return true;</span>
+            }
+<span style = "background-color:#dfd">        }
+    }
+    return false;
+}</span>
+
+<span style = "background-color:#dfd">bool GameMap::isNumberValid(const GameMap&amp; shudu, int row, int col, int number) {
+    return !isNumberInRow(shudu, row, number) &amp;&amp;</span>
+        !isNumberInColumn(shudu, col, number) &amp;&amp;
+        !isNumberInBox(shudu, row - row % 3, col - col % 3, number);
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">bool GameMap::isShuduSolved(const GameMap&amp; shudu) {
+    for (int row = 0; row &lt; MapSize; row++) {
+        for (int col = 0; col &lt; MapSize; col++) {
+            if (shudu.gameMap[row][col] == 0) {</span>
+<span style = "background-color:#fdd">                return false;</span>
+            }
+<span style = "background-color:#dfd">        }
+    }
+    return true;
+}</span>
+
+<span style = "background-color:#dfd">bool GameMap::solveShudu(GameMap&amp; shudu, int&amp; solutionCount) {</span>
+    // cout &lt;&lt; "½øÈëÇó½â" &lt;&lt; endl;
+<span style = "background-color:#dfd">    for (int row = 0; row &lt; MapSize; row++) {
+        for (int col = 0; col &lt; MapSize; col++) {
+            if (shudu.gameMap[row][col] == 0) {
+                for (int number = 1; number &lt;= MapSize; number++) {
+                    if (isNumberValid(shudu, row, col, number)) {
+                        shudu.gameMap[row][col] = number;
+                        if (solveShudu(shudu, solutionCount)) {
+                            if (solutionCount &gt; 1) {
+                                return true;  // ÓÐ¶à¸ö½â£¬Í£Ö¹Çó½â</span>
+                            }
+                        }
+<span style = "background-color:#dfd">                        shudu.gameMap[row][col] = 0;  // »ØËÝ</span>
+                    }
+<span style = "background-color:#dfd">                }
+                return false;</span>
+            }
+<span style = "background-color:#dfd">        }
+    }</span>
+
+<span style = "background-color:#dfd">    if (isShuduSolved(shudu)) {
+        solutionCount++;
+        return true;</span>
+    }
+<span style = "background-color:#fdd">    return false;</span>
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">static void saveToFile(const set&lt;GameMap, SudoCompare&gt;&amp; uniqueObjects, const string&amp; filename) {
+    ofstream file(filename);
+    int mycount = 1;
+    if (file.is_open()) {
+        for (const auto&amp; obj : uniqueObjects) {
+            file &lt;&lt; "Map" &lt;&lt; mycount &lt;&lt; "---------------------------" &lt;&lt; endl;;
+            for (const auto&amp; row : obj.gameMap) {
+                for (int val : row) {
+                    string cval;
+                    cval = to_string(val);
+                    if (cval == "0") 
+                        cval = "$";
+                    file &lt;&lt; cval &lt;&lt; " ";
+                }
+                file &lt;&lt; endl;
+            }
+            mycount++;
+        }
+        file.close();
+        cout &lt;&lt; "Map data saved to file: " &lt;&lt; filename &lt;&lt; endl;
+    }</span>
+    else {
+<span style = "background-color:#fdd">        cerr &lt;&lt; "Failed to open file: " &lt;&lt; filename &lt;&lt; endl;</span>
+    }
+<span style = "background-color:#dfd">}</span>
+
+class ShuduGame {
+private:
+    vector&lt;GameMap&gt; gameMaps;
+    GameMap gameMap;
+    bool mapRow[MapSize][MapSize];  // ¼ÇÂ¼Ã¿¸öÊý×Ö³öÏÖÔÚÄÄÒ»ÐÐ
+    bool mapCloumn[MapSize][MapSize];  // ¼ÇÂ¼Ã¿¸öÊý×Ö³öÏÖÔÚÄÄÒ»ÁÐ
+    bool mapBlock[MapSize][MapSize / 3][MapSize / 3];  // ¼ÇÂ¼Ã¿¸öÊý×Ö³öÏÖÔÚÄÄÒ»¿é£¨3*3£©
+    stack&lt;pair&lt;int, int&gt;&gt; mapSpace;  // ¼ÇÂ¼Ã¿¸ö¿Õ¸ñµÄÎ»ÖÃ
+<span style = "background-color:#dfd">    int gameMapsNum = 0;
+    int solutionIndex = 0;
+    int gameIndex = 0;
+    int solutionNum = 0;</span>
+public:
+    ShuduGame();
+    void solve_shuduGame(string path, int solutionNum);
+    bool test_shuduGame();
+    void load_shuduGame(string path);
+    void save_shuduGame();
+};
+
+<span style = "background-color:#dfd">ShuduGame::ShuduGame() {
+    for (int i = 0; i &lt; MapSize; i++) {
+        for (int j = 0; j &lt; MapSize; j++) {
+            mapRow[i][j] = false;
+            mapCloumn[i][j] = false;
+        }
+    }</span>
+
+<span style = "background-color:#dfd">    for (int i = 0; i &lt; MapSize; i++)
+        for (int j = 0; j &lt; MapSize / 3; j++)
+            for (int k = 0; k &lt; MapSize / 3; k++)
+                mapBlock[i][j][k] = false;
+}</span>
+
+<span style = "background-color:#dfd">void ShuduGame::load_shuduGame(string path) {</span>
+    // ´ÓÎÄ¼þÖÐ¶ÁÈ¡Èô¸É¸öÊý¶ÀÓÎÏ·
+    // cout&lt;&lt;"¿ªÊ¼¶ÁÈ¡£¡"&lt;&lt;path&lt;&lt;endl;
+<span style = "background-color:#dfd">    ifstream file(path);
+    string line;
+    int index = 0;
+    GameMap gameMap;
+    while (getline(file, line)) {
+        if (index % 10) {
+            for (int i = 0; i &lt; MapSize; i++) {
+                if (line[i * 2] == '$')
+                    gameMap.gameMap[index % 10 - 1][i] = 0;</span>
+                else
+<span style = "background-color:#dfd">                    gameMap.gameMap[index % 10 - 1][i] = (line[i * 2] - '0');
+            }</span>
+        }
+<span style = "background-color:#dfd">        if ((index + 1) % 10 == 0) {
+            this-&gt;gameMaps.push_back(gameMap);</span>
+        }
+<span style = "background-color:#dfd">        index++;
+    }
+    gameMapsNum = index / 10;</span>
+    // cout&lt;&lt;"¶ÁÈ¡Íê³É£¡"&lt;&lt;endl;
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">void ShuduGame::save_shuduGame() {</span>
+    // ´ÓÎÄ¼þÖÐ¶ÁÈ¡Èô¸É¸öÊý¶ÀÓÎÏ·
+<span style = "background-color:#dfd">    if (gameIndex == 1) {
+        ofstream file("shudu.txt", ios::trunc);
+        file.close();
+    }
+    ofstream file("shudu.txt", ios::app);
+    if (solutionIndex == 1) {
+        file &lt;&lt; "ÓÎÏ·" &lt;&lt; gameIndex;
+        file &lt;&lt; "-----------------------" &lt;&lt; endl;</span>
+    }
+    // else
+    //    file.seekp(0,ios::end);
+<span style = "background-color:#dfd">    if (solutionIndex &lt;= solutionNum || !solutionNum) {
+        file &lt;&lt; "½â·¨" &lt;&lt; solutionIndex &lt;&lt; endl;
+        for (int i = 0; i &lt; MapSize; i++) {
+            for (int j = 0; j &lt; MapSize; j++)
+                file &lt;&lt; gameMap.gameMap[i][j] &lt;&lt; " ";
+            file &lt;&lt; endl;
+        }</span>
+    }
+    // cout&lt;&lt;"Ð´ÈëÍê³É£¡"&lt;&lt;endl;
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">bool ShuduGame::test_shuduGame() {</span>
+    // ÒÔµÝ¹éµÄ·½Ê½³¢ÊÔÊý¶ÀÆåÅÌµÄ¿ÉÄÜÐÔ
+    // µ±·¢ÏÖÃ»ÓÐ¿ÉÒÔÌîÈëµÄÊý×Ö,¾Í²ÉÓÃ»ØËÝµÄ·½·¨,Ö±µ½ÆåÅÌÖÐËùÓÐµÄ¿Õ¸ñ¶¼±»ÌîÂú
+    // ÎÒÃÇ½«»áÕÒµ½ËùÓÐµÄÊý¶À½â·¨
+<span style = "background-color:#dfd">    if (mapSpace.empty()) {
+        solutionIndex++;
+        save_shuduGame();
+        return true;</span>
+    }
+
+<span style = "background-color:#dfd">    int i = (mapSpace.top()).first;
+    int j = (mapSpace.top()).second;</span>
+
+<span style = "background-color:#dfd">    for (int number = 0; number &lt; 9; number++) {
+        if (!mapRow[number][i] &amp;&amp; !mapCloumn[number][j] &amp;&amp; !mapBlock[number][i / 3][j / 3]) {
+            mapSpace.pop();
+            mapRow[number][i] = true;
+            mapCloumn[number][j] = true;
+            mapBlock[number][i / 3][j / 3] = true;
+            gameMap.gameMap[i][j] = number + 1;
+            test_shuduGame();
+            mapSpace.push(pair&lt;int, int&gt;(i, j));
+            mapRow[number][i] = false;
+            mapCloumn[number][j] = false;
+            mapBlock[number][i / 3][j / 3] = false;</span>
+        }
+<span style = "background-color:#dfd">    }
+    return false;
+}</span>
+
+<span style = "background-color:#dfd">void ShuduGame::solve_shuduGame(string path, int sNum) {
+    load_shuduGame(path);
+    solutionNum = sNum;
+    for (int count = 0; count &lt; gameMapsNum; count++) {
+        gameMap = gameMaps[count];
+        solutionIndex = 0;
+        gameIndex = count + 1;</span>
+        /*for(int i=0;i&lt;9;i++)
+        {
+            for(int j=0;j&lt;9;j++)
+            {
+                cout&lt;&lt;gameMap.gameMap[i][j]&lt;&lt;" ";
+            }
+            cout&lt;&lt;endl;
+        }
+        cout&lt;&lt;"-----------------"&lt;&lt;endl;*/
+<span style = "background-color:#dfd">        for (int i = 0; i &lt; MapSize; i++) {
+            for (int j = 0; j &lt; MapSize; j++) {
+                mapRow[i][j] = false;
+                mapCloumn[i][j] = false;
+            }
+        }</span>
+
+<span style = "background-color:#dfd">        for (int i = 0; i &lt; MapSize; i++)
+            for (int j = 0; j &lt; MapSize / 3; j++)
+                for (int k = 0; k &lt; MapSize / 3; k++)
+                    mapBlock[i][j][k] = false;</span>
+
+<span style = "background-color:#dfd">        mapSpace = stack&lt;pair&lt;int, int&gt;&gt;();</span>
+        // ¶Ôµ±Ç°Êý¶ÀÆåÅÌÐÅÏ¢½øÐÐÍ³¼Æ,ÕÒ³öÃ¿¸öÊý×ÖËùÔÚµÄÐÐºÍÁÐÒÔ¼°¿Õ¸ñµÄÎ»ÖÃ
+<span style = "background-color:#dfd">        for (int i = 0; i &lt; MapSize; i++) {
+            for (int j = 0; j &lt; MapSize; j++) {
+                if (gameMap.gameMap[i][j]) {
+                    int num = gameMap.gameMap[i][j] - 1;
+                    mapRow[num][i] = true;
+                    mapCloumn[num][j] = true;
+                    mapBlock[num][i / 3][j / 3] = true;
+                }</span>
+                else {
+<span style = "background-color:#dfd">                    mapSpace.push(pair&lt;int, int&gt;(i, j));</span>
+                }
+<span style = "background-color:#dfd">            }
+        }
+        test_shuduGame();
+    }
+}</span>
+
+class Instruction {
+private:
+    int c = 0;  // ÖÕ¾Ö¸öÊý
+    int n = 0;  // ÓÎÏ·ÊýÁ¿
+    int m = 0;  // ÓÎÏ·ÄÑ¶È
+    int rMin = 0;  // ÍÚ¿ÕÊýÁ¿×îÐ¡Öµ
+    int rMax = 0;  // ÍÚ¿ÕÊýÁ¿×î´óÖµ
+    bool uFlag = false;  // ½âÎ¨Ò»±êÖ¾
+public:
+    void handle_inst(int argc, char* argv[]);
+    bool isInRange(int value, int minRange, int maxRange);
+};
+
+<span style = "background-color:#dfd">bool Instruction::isInRange(int value, int minRange, int maxRange) {
+    return (value &gt;= minRange &amp;&amp; value &lt;= maxRange);
+}</span>
+
+
+<span style = "background-color:#dfd">void Instruction::handle_inst(int argc, char* argv[]) {
+    ShuduGame shuduGame;
+    GameMap grid;
+    if (strcmp(argv[1], "-s") == 0) {
+        if (argc == 3)
+            shuduGame.solve_shuduGame(argv[2], 0);
+        else if (argc == 5 &amp;&amp; strcmp(argv[3], "-n") == 0)
+            shuduGame.solve_shuduGame(argv[2], argv[4][0] - '0');</span>
+        else
+<span style = "background-color:#fdd">            cout &lt;&lt; "error: please input the file path!" &lt;&lt; endl;</span>
+<span style = "background-color:#dfd">    }
+    else if (strcmp(argv[1], "-c") == 0) {</span>
+        // cout &lt;&lt; "cvalue" &lt;&lt; cValue &lt;&lt; endl;
+<span style = "background-color:#dfd">        if (argc == 3) {
+            c = stoi(argv[2]);
+            if (isInRange(c, 1, 1000000)) {
+                grid.add_endGrids(c);  // Éú³ÉÊý¶ÀÖÕ¾Ö
+                saveToFile(endGrids, "endMaps.txt");
+                return;</span>
+<span style = "background-color:#fdd">            }</span>
+            else {
+<span style = "background-color:#dfd">                cout &lt;&lt; "The quantity exceeds the range. Please provide a value between 1-1000000" &lt;&lt; endl;
+                return;</span>
+            }
+<span style = "background-color:#fdd">        }</span>
+        else {
+<span style = "background-color:#dfd">            cout &lt;&lt; "Error:The parameter is missing,please enter :shudu.exe - c &lt;count&gt;" &lt;&lt; endl;
+            return;</span>
+        }
+<span style = "background-color:#fdd">    }</span>
+    else {
+<span style = "background-color:#dfd">        for (int i = 1; i &lt; argc; i++) {
+            string arg = argv[i];
+            if (arg == "-n") {
+                i++;
+                if (i &gt;= argc) {
+                    cout &lt;&lt; "Error:The parameter is missing,please enter :shudu.exe - n &lt;count&gt;" &lt;&lt; endl;
+                    return;</span>
+                }
+<span style = "background-color:#dfd">                n = stoi(argv[i]);
+                if (!isInRange(n, 1, 10000)) {
+                    cout &lt;&lt; "Error: Game quantity range should be between 1 and 10000" &lt;&lt; endl;
+                    return;</span>
+                }
+<span style = "background-color:#dfd">            }
+            else if (arg == "-m") {
+                i++;
+                if (i &gt;= argc) {
+                    cout &lt;&lt; "Error:The parameter is missing,please enter :shudu.exe - n &lt;count&gt; -m &lt;mode&gt;" &lt;&lt; endl;
+                    return;</span>
+                }
+<span style = "background-color:#dfd">                m = stoi(argv[i]);
+                if (!isInRange(m, 1, 3)) {
+                    cout &lt;&lt; "Error: please choose 1, 2, or 3" &lt;&lt; endl;
+                    return;</span>
+                }
+<span style = "background-color:#dfd">            }
+            else if (arg == "-r") {
+                i++;
+                if (i &gt;= argc) {
+                    cout &lt;&lt; "Error:please input shudu.exe - n&lt;count&gt;- r&lt;minHoles~maxHoles&gt;" &lt;&lt; endl;
+                    return;</span>
+                }
+<span style = "background-color:#dfd">                string range = argv[i];
+                size_t rangePos = range.find("~");
+                if (rangePos == string::npos) {
+                    cout &lt;&lt; "Error:please input shudu.exe - n&lt;count&gt;- r&lt;minHoles~maxHoles&gt;" &lt;&lt; endl;
+                    return;</span>
+                }
+<span style = "background-color:#dfd">                string rMinValue = range.substr(0, rangePos);
+                string rMaxValue = range.substr(rangePos + 1);
+                rMin = stoi(rMinValue);
+                rMax = stoi(rMaxValue);
+                if (!isInRange(rMin, 20, 55) || !isInRange(rMax, 20, 55) || rMin &gt; rMax) {
+                    cout &lt;&lt; "Error:please provide a valid range between 20 and 55" &lt;&lt; endl;
+                    return;</span>
+                }
+<span style = "background-color:#dfd">            }
+            else if (arg == "-u") {
+                uFlag = true;
+            }</span>
+            else {
+<span style = "background-color:#dfd">                cout &lt;&lt; "error: inst '" &lt;&lt; argv[1] &lt;&lt; "' doesn't exist!" &lt;&lt; endl;
+                return;</span>
+            }
+<span style = "background-color:#dfd">        }
+        if (n == 0) {
+            cout &lt;&lt; "error: Please input n" &lt;&lt; endl;
+            return;</span>
+        }
+<span style = "background-color:#dfd">        grid.add_endGrids(n);  // Éú³ÉÊý¶ÀÖÕ¾Ö
+        grid.generate_gameMap(rMin, rMax, m, uFlag);
+        saveToFile(gameGrids, "gameMaps.txt");
+        return;</span>
+    }
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">int main(int argc, char* argv[]) {
+    Instruction inst;
+    inst.handle_inst(argc, argv);
+    return 0;
+}</span></pre>
+        <hr />
+        <table width="100%">
+            <thead>
+                <tr>
+                    <th align="center">
+                        <small>Generated by</small>
+                        <a href="https://github.com/OpenCppCoverage/OpenCppCoverage/releases">
+                            <strong>OpenCppCoverage (Version: 0.9.9.0)</strong>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>

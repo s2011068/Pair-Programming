@@ -1,0 +1,61 @@
+@echo off
+
+set EXECUTABLE=D:\MyVSCodes\sudo\su\Debug\su.exe
+set SOURCES=D:\MyVSCodes\sudo\su
+
+echo ========================================
+echo Running integration tests...Right
+echo ========================================
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:c100.cov -- %EXECUTABLE% -c 100
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:c363000.cov -- %EXECUTABLE% -c 363000
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n5.cov -- %EXECUTABLE% -n 5
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10m1.cov -- %EXECUTABLE% -n 10 -m 1
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10m2.cov -- %EXECUTABLE% -n 10 -m 2
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10m3.cov -- %EXECUTABLE% -n 10 -m 3
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10r25~35.cov -- %EXECUTABLE% -n 10 -r 25~35
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10u.cov -- %EXECUTABLE% -n 100 -u
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sgametxt.cov -- %EXECUTABLE% -s game.txt
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sDgametxt.cov -- %EXECUTABLE% -s D:\Datas\game.txt
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sgametxt.cov -- %EXECUTABLE% -s game.txt -n 1
+
+
+
+echo ========================================
+echo Running integration tests...Error
+echo ========================================
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:c1000001.cov -- %EXECUTABLE% -c 1000001
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10001.cov -- %EXECUTABLE% -n 10001
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:x4.cov -- %EXECUTABLE% -x 4
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10m.cov -- %EXECUTABLE% -n 10 -m
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10m4.cov -- %EXECUTABLE% -n 10 -m 4
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10r.cov -- %EXECUTABLE% -n 10 -r
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10r13~25.cov -- %EXECUTABLE% -n 10 -r 13~25
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n10r33-35.cov -- %EXECUTABLE% -n 10 -r 33-35
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:r33~35.cov -- %EXECUTABLE% -r 33~35
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:m2.cov -- %EXECUTABLE% -m 2 
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:c.cov -- %EXECUTABLE% -c
+
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:n.cov -- %EXECUTABLE% -n
+
