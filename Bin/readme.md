@@ -16,8 +16,8 @@ shudu.exe：gcc version 5.1.0 (tdm64-1)
 | -m       | 生成游戏的难度             | 1-3              | shudu.exe -n 100 -m 1      |
 | -r       | 生成游戏中的挖空的数量范围 | 20-55            | shudu.exe -n 10 -r 20~55   |
 | -u       | 生成游戏的解唯一           |                  | shudu.exe -n 10 -u         |
-| -n*      | 多解情况下最多输出的解个数 |                  | shudu.exe -s game.txt -n 2 |
+| -N      | 多解情况下最多输出的解个数 |                  | shudu.exe -s game.txt -N 2 |
 
 注意：m、r、u只有和n一起使用才认为参数无误，否则报错。
 
--n*只有和s在一起才有效。
+N只有和s在一起才有效。

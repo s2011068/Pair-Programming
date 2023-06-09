@@ -456,7 +456,7 @@ void Instruction::handle_inst(int argc, char* argv[]) {
     if (strcmp(argv[1], "-s") == 0) {
         if (argc == 3)
             shuduGame.solve_shuduGame(argv[2], 0);
-        else if (argc == 5 && strcmp(argv[3], "-n") == 0)
+        else if (argc == 5 && strcmp(argv[3], "-N") == 0)
             shuduGame.solve_shuduGame(argv[2], argv[4][0] - '0');
         else
             cout << "error: please input the file path!" << endl;

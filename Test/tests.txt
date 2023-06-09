@@ -27,7 +27,7 @@ OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sgametxt.cov -- %EX
 
 OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sDgametxt.cov -- %EXECUTABLE% -s D:\Datas\game.txt
 
-OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sgamen1txt.cov -- %EXECUTABLE% -s game.txt -n 1
+OpenCppCoverage.exe --sources %SOURCES% --export_type=binary:sgamen1txt.cov -- %EXECUTABLE% -s game.txt -N 1
 
 
 
